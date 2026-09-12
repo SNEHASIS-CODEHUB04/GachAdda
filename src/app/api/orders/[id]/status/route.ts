@@ -35,10 +35,15 @@ export async function PATCH(req: NextRequest, ctx: RouteContext<"/api/orders/[id
     const delivery = await tx.delivery.findUnique({ where: { orderId: id } });
     if (delivery) {
       const timeline = Array.isArray(delivery.timeline) ? delivery.timeline as object[] : [];
+      // Only add to timeline if it's a delivery-progress status
+      const deliveryStatuses = ["PAYMENT_VERIFIED","ORDER_ACCEPTED","PROCESSING","PACKED","DISPATCHED","DELIVERED"];
+      const timelineEntry = deliveryStatuses.includes(status)
+        ? { status, timestamp: new Date().toISOString(), note }
+        : null;
       await tx.delivery.update({
         where: { orderId: id },
         data: {
-          timeline: [...timeline, { status, timestamp: new Date().toISOString(), note }],
+          timeline: timelineEntry ? [...timeline, timelineEntry] : timeline,
           ...(status === "DELIVERED" ? { deliveredAt: new Date() } : {}),
         },
       });

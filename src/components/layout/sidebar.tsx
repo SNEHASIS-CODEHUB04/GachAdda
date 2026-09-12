@@ -7,7 +7,7 @@ import {
   MessageCircle, Bell, FileText, BarChart2,
   Users, Star, Settings, User, Heart,
   Send, Tag, Truck, BookOpen, Image,
-  CheckCircle, Search,
+  CheckCircle, Search, MessageSquare,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -44,6 +44,7 @@ const sellerNav: NavItem[] = [
   { href: "/seller/discount-requests",  label: "Discount Requests",icon: <Tag             className="h-4.5 w-4.5" /> },
   { href: "/seller/offers",             label: "My Offers",        icon: <CheckCircle     className="h-4.5 w-4.5" /> },
   { href: "/seller/messages",           label: "Messages",         icon: <MessageCircle   className="h-4.5 w-4.5" /> },
+  { href: "/seller/questions",          label: "Questions",        icon: <MessageSquare   className="h-4.5 w-4.5" /> },
   { href: "/seller/notifications",      label: "Notifications",    icon: <Bell            className="h-4.5 w-4.5" /> },
   { href: "/seller/sales-history",      label: "Sales History",    icon: <Truck           className="h-4.5 w-4.5" /> },
   { href: "/seller/invoices",           label: "Invoices",         icon: <FileText        className="h-4.5 w-4.5" /> },

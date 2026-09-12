@@ -25,7 +25,7 @@ model User {
   name           String
   email          String    @unique
   emailVerified  DateTime?
-  phone          String?   @unique
+  phone          String?
   passwordHash   String?
   role           Role      @default(BUYER)
   avatarUrl      String?
@@ -43,14 +43,18 @@ model User {
   orders         Order[]         // buyer's orders
   buyerRequests  BuyerRequest[]  // requests made by buyer
   sellerOffers   SellerOffer[]   // offers made by seller
-  sentMessages   Message[]       @relation("SentMessages")
-  conversations  ConversationParticipant[]
-  notifications  Notification[]
-  posts          Post[]
-  comments       Comment[]
-  reviews        Review[]        // reviews written by buyer
-  sellerProfile  SellerProfile?
-  wishlist       Wishlist[]
+  sentMessages      Message[]       @relation("SentMessages")
+  conversations     ConversationParticipant[]
+  notifications     Notification[]
+  posts             Post[]
+  comments          Comment[]
+  reviews           Review[]        // reviews written by buyer
+  sellerProfile     SellerProfile?
+  wishlist          Wishlist[]
+  questionsAsked    ProductQuestion[] @relation("QuestionsBuyer")
+  questionsReceived ProductQuestion[] @relation("QuestionsSeller")
+  buyerNegotiations  DiscountNegotiation[] @relation("BuyerNegotiations")
+  sellerNegotiations DiscountNegotiation[] @relation("SellerNegotiations")
 
   @@map("users")
 }
@@ -194,6 +198,8 @@ model Product {
   orderItems OrderItem[]
   reviews    Review[]
   wishlist   Wishlist[]
+  questions  ProductQuestion[]
+  negotiations DiscountNegotiation[]
 
   @@index([sellerId])
   @@index([categoryId])
@@ -444,9 +450,13 @@ model DiscountNegotiation {
   finalPrice  Float?
   message     String?
   status      NegotiationStatus  @default(OPEN)
-  thread      Json               @default("[]") // [{role, price, message, createdAt}]
+  thread      Json               @default("[]")
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
+
+  product  Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  buyer    User    @relation("BuyerNegotiations",  fields: [buyerId],   references: [id], onDelete: Cascade)
+  seller   User    @relation("SellerNegotiations", fields: [sellerId],  references: [id], onDelete: Cascade)
 
   @@index([productId, buyerId])
   @@map("discount_negotiations")
@@ -635,4 +645,29 @@ model Notification {
 
   @@index([userId, isRead])
   @@map("notifications")
+}
+
+// ─────────────────────────────────────────────
+// PRODUCT QUESTIONS
+// ─────────────────────────────────────────────
+
+model ProductQuestion {
+  id         String    @id @default(cuid())
+  productId  String
+  buyerId    String
+  sellerId   String
+  question   String    @db.Text
+  answer     String?   @db.Text
+  answeredAt DateTime?
+  isPublic   Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  buyer   User    @relation("QuestionsBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
+  seller  User    @relation("QuestionsSeller", fields: [sellerId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([sellerId, answeredAt])
+  @@map("product_questions")
 }

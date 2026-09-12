@@ -1,13 +1,10 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { Filter, LayoutGrid, LayoutList, SlidersHorizontal } from "lucide-react";
 import { db } from "@/lib/db";
-import { ProductCard } from "@/components/product/product-card";
-import { Pagination } from "@/components/ui/pagination";
-import { ProductCardSkeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
 import { CATEGORIES, PAGINATION } from "@/lib/constants";
 import MarketplaceFilters from "./_components/marketplace-filters";
+import { ProductGrid } from "./_components/product-grid";
+import { MarketplacePagination } from "./_components/marketplace-pagination";
 
 export const metadata: Metadata = { title: "Marketplace — Browse Plants & Seeds" };
 
@@ -87,23 +84,11 @@ export default async function MarketplacePage({
 
           {/* Results */}
           <div className="flex-1 min-w-0">
-            {products.length === 0 ? (
-              <div className="flex flex-col items-center py-20 text-center">
-                <p className="text-5xl mb-4" aria-hidden="true">🌱</p>
-                <h2 className="text-xl font-semibold text-primary-dark">No plants found</h2>
-                <p className="text-[var(--color-sage)] mt-2">Try adjusting your filters or search term</p>
+            <ProductGrid products={products} />
+            {products.length > 0 && totalPages > 1 && (
+              <div className="mt-8">
+                <MarketplacePagination currentPage={page} totalPages={totalPages} />
               </div>
-            ) : (
-              <>
-                <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {products.map((product) => (
-                    <ProductCard key={product.id} product={product} />
-                  ))}
-                </div>
-                <div className="mt-8">
-                  <Pagination page={page} totalPages={totalPages} onPageChange={() => {}} />
-                </div>
-              </>
             )}
           </div>
         </div>

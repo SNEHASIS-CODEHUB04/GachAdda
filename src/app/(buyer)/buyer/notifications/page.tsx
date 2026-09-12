@@ -11,7 +11,7 @@ export const metadata: Metadata = { title: "Notifications" };
 
 export default async function NotificationsPage() {
   const session = await auth();
-  if (!session?.user) redirect("/login");
+  if (!session?.user || session.user.role !== "BUYER") redirect("/login");
 
   const notifications = await db.notification.findMany({
     where: { userId: session.user.id },

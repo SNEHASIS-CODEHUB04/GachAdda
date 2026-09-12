@@ -5,7 +5,7 @@ import { requireAuth, ok, err } from "@/lib/api-helpers";
 
 const schema = z.object({
   orderId:       z.string().cuid(),
-  screenshotUrl: z.string().url(),
+  screenshotUrl: z.string().min(1),
   transactionId: z.string().min(4),
   amount:        z.number().positive(),
 });
@@ -43,13 +43,15 @@ export async function POST(req: NextRequest) {
     db.notification.create({
       data: {
         userId:  order.sellerId,
-        title:   "Payment Proof Received",
-        body:    `Buyer submitted payment proof for Order ${order.orderNumber}`,
+        title:   "Payment Proof Received 🔔",
+        body:    `Buyer submitted payment proof for Order ${order.orderNumber}. Please verify.`,
         refType: "order",
         refId:   orderId,
       },
     }),
   ]);
+
+  // Invoice is NOT generated here — only generated after Suman verifies payment
 
   return ok({ proof }, 201);
 }

@@ -54,5 +54,32 @@ export async function POST(req: NextRequest, ctx: RouteContext<"/api/payments/[i
     }),
   ]);
 
-  return ok({ message: isVerify ? "Payment verified" : "Payment rejected" });
+  // If verified: update delivery timeline + generate invoice
+  if (isVerify) {
+    const delivery = await db.delivery.findUnique({ where: { orderId: payment.orderId } });
+    if (delivery) {
+      const existing = Array.isArray(delivery.timeline) ? delivery.timeline as object[] : [];
+      await db.delivery.update({
+        where: { orderId: payment.orderId },
+        data: {
+          timeline: [
+            ...existing,
+            { status: "PAYMENT_VERIFIED", timestamp: new Date().toISOString(), note: "Payment verified by seller" },
+          ],
+        },
+      });
+    }
+    // Generate invoice ONLY on verification
+    const invoiceNumber = `INV-${payment.order.orderNumber}`;
+    await db.invoice.upsert({
+      where: { orderId: payment.orderId },
+      create: { orderId: payment.orderId, invoiceNumber, issuedAt: new Date() },
+      update: {},
+    });
+  } else {
+    // Rejected — delete any invoice that may have been pre-created
+    await db.invoice.deleteMany({ where: { orderId: payment.orderId } });
+  }
+
+  return ok({ message: isVerify ? "Payment verified — invoice generated" : "Payment rejected" });
 }

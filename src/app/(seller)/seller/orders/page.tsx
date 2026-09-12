@@ -92,8 +92,7 @@ export default async function SellerOrdersPage({
                 <tr key={o.id} className="hover:bg-cream/30 transition-colors">
                   <td className="py-3 pr-4">
                     <Link href={`/seller/orders/${o.id}`} className="font-semibold text-primary hover:underline">{o.orderNumber}</Link>
-                  </td>
-                  <td className="py-3 pr-4">
+                  </td>                  <td className="py-3 pr-4">
                     <p>{o.buyer.name}</p>
                     <p className="text-xs text-[var(--color-sage)]">{o.buyer.email}</p>
                   </td>

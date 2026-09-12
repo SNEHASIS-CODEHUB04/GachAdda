@@ -130,10 +130,24 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
               </Badge>
             )}
           </div>
-          {order.payment?.status === "PENDING" && (
+          {(order.status === "PAYMENT_PENDING" || !order.payment?.proof) && order.payment?.status === "PENDING" && (
             <Link href={`/buyer/orders/${order.id}/pay`}>
-              <Button className="w-full">Pay Now via UPI</Button>
+              <Button className="w-full" size="sm">💳 Pay Now via PhonePe QR</Button>
             </Link>
+          )}
+          {order.payment?.status === "SUBMITTED" && (
+            <p className="text-xs text-amber-600 bg-amber-50 rounded-lg p-2">⏳ Payment proof submitted. Awaiting seller verification.</p>
+          )}
+          {order.payment?.status === "VERIFIED" && (
+            <p className="text-xs text-success bg-success/5 rounded-lg p-2">✅ Payment verified by Suman. Your order is being processed.</p>
+          )}
+          {order.payment?.status === "REJECTED" && (
+            <div className="space-y-2">
+              <p className="text-xs text-error bg-error/5 rounded-lg p-2">❌ Payment rejected. Please re-submit proof.</p>
+              <Link href={`/buyer/orders/${order.id}/pay`}>
+                <Button className="w-full" size="sm" variant="outline">Re-submit Payment</Button>
+              </Link>
+            </div>
           )}
         </CardBody>
       </Card>
@@ -155,10 +169,15 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       )}
 
       {/* Actions */}
-      <div className="flex gap-3">
+      <div className="flex gap-3 flex-wrap">
         {order.invoice && (
           <Link href={`/api/invoices/${order.invoice.id}`} target="_blank">
-            <Button variant="outline">📄 Download Invoice</Button>
+            <Button variant="outline" leftIcon={<span>📄</span>}>Download Invoice</Button>
+          </Link>
+        )}
+        {order.payment?.status === "PENDING" && (
+          <Link href={`/buyer/orders/${order.id}/pay`}>
+            <Button leftIcon={<span>💳</span>}>Pay Now</Button>
           </Link>
         )}
         {(order.status === "DELIVERED" || order.status === "COMPLETED") && (

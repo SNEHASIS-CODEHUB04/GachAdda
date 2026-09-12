@@ -11,16 +11,15 @@ export interface CartItem {
   image:    string | null;
   quantity: number;
   slug:     string;
+  stock:    number; // max qty buyer can add
 }
 
 interface CartStore {
-  items: CartItem[];
-  addItem: (item: Omit<CartItem, "quantity">) => void;
+  items:      CartItem[];
+  addItem:    (item: Omit<CartItem, "quantity">) => void;
   removeItem: (id: string) => void;
-  updateQty: (id: string, qty: number) => void;
-  clearCart: () => void;
-  total: number;
-  itemCount: number;
+  updateQty:  (id: string, qty: number) => void;
+  clearCart:  () => void;
 }
 
 export const useCartStore = create<CartStore>()(
@@ -32,9 +31,11 @@ export const useCartStore = create<CartStore>()(
         set((state) => {
           const exists = state.items.find((i) => i.id === item.id);
           if (exists) {
+            // Don't exceed available stock
+            const newQty = Math.min(exists.quantity + 1, item.stock ?? 999);
             return {
               items: state.items.map((i) =>
-                i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
+                i.id === item.id ? { ...i, quantity: newQty } : i
               ),
             };
           }
@@ -45,23 +46,24 @@ export const useCartStore = create<CartStore>()(
         set((state) => ({ items: state.items.filter((i) => i.id !== id) })),
 
       updateQty: (id, qty) =>
-        set((state) => ({
-          items:
-            qty <= 0
-              ? state.items.filter((i) => i.id !== id)
-              : state.items.map((i) => (i.id === id ? { ...i, quantity: qty } : i)),
-        })),
+        set((state) => {
+          if (qty <= 0) return { items: state.items.filter((i) => i.id !== id) };
+          return {
+            items: state.items.map((i) => {
+              if (i.id !== id) return i;
+              // Clamp to available stock
+              const clamped = Math.min(qty, i.stock ?? 999);
+              return { ...i, quantity: clamped };
+            }),
+          };
+        }),
 
       clearCart: () => set({ items: [] }),
-
-      get total() {
-        return get().items.reduce((sum, i) => sum + i.price * i.quantity, 0);
-      },
-
-      get itemCount() {
-        return get().items.reduce((sum, i) => sum + i.quantity, 0);
-      },
     }),
     { name: "gachadda-cart" }
   )
 );
+
+// Derived selectors — computed fresh each render, always accurate
+export const cartTotal     = (items: CartItem[]) => items.reduce((s, i) => s + i.price * i.quantity, 0);
+export const cartItemCount = (items: CartItem[]) => items.reduce((s, i) => s + i.quantity, 0);

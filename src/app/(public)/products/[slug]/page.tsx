@@ -2,12 +2,14 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ShoppingCart, MessageCircle, Tag, Heart, ShieldCheck } from "lucide-react";
+import { Tag, ShieldCheck } from "lucide-react";
 import { db } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Badge, OrderStatusBadge } from "@/components/ui/badge";
 import { StarRating } from "@/components/ui/star-rating";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { ProductActions } from "./_components/product-actions";
+import { AskQuestion } from "./_components/ask-question";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -37,6 +39,12 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
         take: 8,
         orderBy: { createdAt: "desc" },
         include: { buyer: { select: { name: true, avatarUrl: true } } },
+      },
+      questions: {
+        where: { isPublic: true },
+        orderBy: { createdAt: "desc" },
+        take: 20,
+        include: { buyer: { select: { name: true } } },
       },
     },
   });
@@ -120,22 +128,16 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
             </div>
 
             {/* Actions */}
-            <div className="flex flex-wrap gap-3 mb-8">
-              <Button size="lg" disabled={outOfStock} className="flex-1 sm:flex-none" leftIcon={<ShoppingCart className="h-4 w-4" />}>
-                {outOfStock ? "Out of Stock" : "Add to Cart"}
-              </Button>
-              <Link href={`/buyer/messages?seller=${product.seller.id}`}>
-                <Button variant="outline" size="lg" leftIcon={<MessageCircle className="h-4 w-4" />}>
-                  Chat Seller
-                </Button>
-              </Link>
-              <Button variant="outline" size="lg" leftIcon={<Tag className="h-4 w-4" />}>
-                Request Discount
-              </Button>
-              <Button variant="ghost" size="icon" aria-label="Add to wishlist">
-                <Heart className="h-5 w-5" />
-              </Button>
-            </div>
+            <ProductActions product={{
+              id: product.id,
+              slug: product.slug,
+              name: product.name,
+              finalPrice: product.finalPrice,
+              images: product.images,
+              stockStatus: product.stockStatus,
+              stock: product.stock,
+              seller: { id: product.seller.id, name: product.seller.name },
+            }} />
 
             {/* Care Info */}
             {(product.age || product.height || product.sunlight || product.watering || product.soil) && (
@@ -226,6 +228,17 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
             </div>
           </section>
         )}
+
+        <AskQuestion
+          productId={product.id}
+          productSlug={product.slug}
+          sellerId={product.seller.id}
+          initialQuestions={product.questions.map((q) => ({
+            ...q,
+            answeredAt: q.answeredAt?.toISOString() ?? null,
+            createdAt: q.createdAt.toISOString(),
+          }))}
+        />
 
         {/* Related */}
         {related.length > 0 && (

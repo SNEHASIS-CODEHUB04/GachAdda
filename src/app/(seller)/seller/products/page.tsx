@@ -76,7 +76,6 @@ export default async function SellerProductsPage({
           icon="🌿"
           title="No products yet"
           description="Add your first plant listing to start selling on GachAdda"
-          action={{ label: "Add Product", onClick: () => {} }}
         />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

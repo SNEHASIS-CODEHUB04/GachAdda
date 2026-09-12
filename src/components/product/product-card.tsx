@@ -2,11 +2,15 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, ShoppingCart, MessageCircle, Eye } from "lucide-react";
+import { useState } from "react";
+import { Heart, ShoppingCart, Eye, Zap } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { StarRating } from "@/components/ui/star-rating";
+import { QuickPayModal } from "@/components/quick-pay-modal";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 export interface ProductCardData {
   id: string;
@@ -29,6 +33,7 @@ interface ProductCardProps {
   isWishlisted?: boolean;
   onWishlist?: (id: string) => void;
   onAddToCart?: (id: string) => void;
+  onBuyNow?: (id: string) => void;
   layout?: "grid" | "list";
 }
 
@@ -37,10 +42,20 @@ export function ProductCard({
   isWishlisted,
   onWishlist,
   onAddToCart,
+  onBuyNow,
   layout = "grid",
 }: ProductCardProps) {
+  const { data: session } = useSession();
+  const router = useRouter();
+  const [showBuyNow, setShowBuyNow] = useState(false);
   const shopName = product.seller.sellerProfile?.shopName ?? product.seller.name;
   const outOfStock = product.stockStatus === "OUT_OF_STOCK";
+
+  function handleBuyNow(e: React.MouseEvent) {
+    e.preventDefault();
+    if (!session?.user) { router.push("/login?callbackUrl=/marketplace"); return; }
+    onBuyNow ? onBuyNow(product.id) : setShowBuyNow(true);
+  }
 
   if (layout === "list") {
     return (
@@ -158,9 +173,21 @@ export function ProductCard({
             onClick={() => onAddToCart?.(product.id)}
             aria-label={`Add ${product.name} to cart`}
           >
-            <ShoppingCart className="h-3.5 w-3.5" aria-hidden="true" />
+            <ShoppingCart className="h-3.5 w-3.5 mr-1" aria-hidden="true" />
             {outOfStock ? "Sold Out" : "Add to Cart"}
           </Button>
+          {!outOfStock && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="px-2.5 text-primary border-primary/40 hover:bg-primary/5"
+              onClick={handleBuyNow}
+              aria-label={`Buy ${product.name} now`}
+              title="Buy Now"
+            >
+              <Zap className="h-3.5 w-3.5" />
+            </Button>
+          )}
           <Link href={`/products/${product.slug}`} aria-label={`View ${product.name} details`}>
             <Button variant="outline" size="icon-sm" tabIndex={-1} aria-hidden="true">
               <Eye className="h-3.5 w-3.5" />
@@ -168,6 +195,23 @@ export function ProductCard({
           </Link>
         </div>
       </div>
+
+      {/* Buy Now Modal */}
+      {showBuyNow && (
+        <QuickPayModal
+          buyNowItem={{
+            id: product.id,
+            sellerId: product.seller.id,
+            name: product.name,
+            price: product.finalPrice,
+            image: product.images[0] ?? null,
+            slug: product.slug,
+            stock: product.stock,
+          }}
+          onClose={() => setShowBuyNow(false)}
+          onSuccess={() => { setShowBuyNow(false); router.push("/buyer/orders"); }}
+        />
+      )}
     </article>
   );
 }

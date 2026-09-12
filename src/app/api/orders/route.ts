@@ -13,6 +13,14 @@ const createSchema = z.object({
   addressId:     z.string().cuid().optional(),
   deliveryCharge: z.number().min(0).default(0),
   discount:       z.number().min(0).default(0),
+  address: z.object({
+    fullName: z.string(),
+    phone:    z.string(),
+    line1:    z.string(),
+    city:     z.string(),
+    state:    z.string().default("India"),
+    pincode:  z.string(),
+  }).optional(),
 });
 
 export async function GET(req: NextRequest) {
@@ -55,7 +63,7 @@ export async function POST(req: NextRequest) {
   const parsed = createSchema.safeParse(body);
   if (!parsed.success) return err(parsed.error.issues[0].message);
 
-  const { items, addressId, deliveryCharge, discount } = parsed.data;
+  const { items, deliveryCharge, discount } = parsed.data;
 
   // Fetch products & validate seller consistency
   const productIds = items.map((i) => i.productId);
@@ -81,6 +89,18 @@ export async function POST(req: NextRequest) {
     return sum + p.finalPrice * item.quantity;
   }, 0);
   const total = subtotal + deliveryCharge - discount;
+
+  // Create inline address if provided
+  let addressId: string | undefined = parsed.data.addressId;
+  if (parsed.data.address) {
+    const addr = await db.address.create({
+      data: {
+        userId: user!.id,
+        ...parsed.data.address,
+      },
+    });
+    addressId = addr.id;
+  }
 
   const order = await db.$transaction(async (tx: Prisma.TransactionClient) => {
     const o = await tx.order.create({
@@ -122,4 +142,3 @@ export async function POST(req: NextRequest) {
 
   return ok({ order }, 201);
 }
-

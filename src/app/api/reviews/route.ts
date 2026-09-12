@@ -19,6 +19,23 @@ const replySchema = z.object({
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
   const { skip, limit, page } = parsePagination(url);
+
+  // Return current user's own reviews
+  const myReviews = url.searchParams.get("myReviews") === "true";
+  if (myReviews) {
+    const { user, error } = await requireAuth();
+    if (error) return error;
+    const reviews = await db.review.findMany({
+      where: { buyerId: user!.id },
+      orderBy: { createdAt: "desc" },
+      include: {
+        product: { select: { name: true, images: true } },
+        buyer:   { select: { name: true, avatarUrl: true } },
+      },
+    });
+    return ok({ reviews });
+  }
+
   const productId = url.searchParams.get("productId") ?? undefined;
   const sellerId  = url.searchParams.get("sellerId")  ?? undefined;
 

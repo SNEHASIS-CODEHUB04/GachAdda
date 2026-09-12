@@ -50,17 +50,11 @@ export async function POST(req: NextRequest) {
 
   const existing = await db.user.findFirst({
     where: {
-      OR: [
-        { email: { equals: email, mode: "insensitive" } },
-        ...(phone ? [{ phone }] : []),
-      ],
+      email: { equals: email, mode: "insensitive" },
     },
   });
   if (existing) {
-    if (existing.email.toLowerCase() === email.toLowerCase()) {
-      return err("An account with this email already exists", 409);
-    }
-    return err("An account with this phone number already exists", 409);
+    return err("An account with this email already exists", 409);
   }
 
   const passwordHash = await bcrypt.hash(password, 12);
@@ -69,7 +63,7 @@ export async function POST(req: NextRequest) {
     data: {
       name,
       email,
-      phone,
+      phone: phone || null,
       passwordHash,
       role,
       sellerProfile: role === "SELLER"

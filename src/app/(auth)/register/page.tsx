@@ -7,11 +7,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { signIn } from "next-auth/react";
-import { Eye, EyeOff, ShoppingBag, Store } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
-import { cn } from "@/lib/utils";
 
 const schema = z
   .object({
@@ -38,7 +37,6 @@ export default function RegisterPage() {
   const router = useRouter();
   const { success, error: showError } = useToast();
   const [showPw, setShowPw] = useState(false);
-  const [role, setRole] = useState<"BUYER" | "SELLER">("BUYER");
 
   const {
     register,
@@ -50,23 +48,13 @@ export default function RegisterPage() {
     defaultValues: { role: "BUYER", name: "", email: "", phone: "", password: "", shopName: "" },
   });
 
-  function selectRole(r: "BUYER" | "SELLER") {
-    setRole(r);
-    setValue("role", r, { shouldValidate: true, shouldDirty: true });
-    if (r === "BUYER") {
-      setValue("shopName", "");
-    }
-  }
-
   async function onSubmit(data: FormData) {
-    const activeRole = role;
     const payload = {
       name:     data.name.trim(),
       email:    data.email.trim().toLowerCase(),
-      phone:    data.phone?.trim() ? data.phone.trim() : undefined,
+      phone:    data.phone?.trim() && data.phone.trim().length > 0 ? data.phone.trim() : null,
       password: data.password,
-      role:     activeRole,
-      shopName: activeRole === "SELLER" && data.shopName?.trim() ? data.shopName.trim() : undefined,
+      role:     "BUYER" as const,
     };
 
     const res = await fetch("/api/register", {
@@ -94,7 +82,7 @@ export default function RegisterPage() {
       return;
     }
 
-    router.push(activeRole === "SELLER" ? "/seller/dashboard" : "/buyer/dashboard");
+    router.push("/buyer/dashboard");
     router.refresh();
   }
 
@@ -103,40 +91,11 @@ export default function RegisterPage() {
       <div className="bg-white rounded-2xl shadow-card-lg p-8 border border-[var(--border)]">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-primary-dark">Join GachAdda 🌱</h1>
-          <p className="text-[var(--color-sage)] mt-1 text-sm">Create your free account</p>
-        </div>
-
-        <div className="mb-6">
-          <p className="text-sm font-medium text-primary-dark mb-3">I want to…</p>
-          <div className="grid grid-cols-2 gap-3">
-            {(
-              [
-                { value: "BUYER",  icon: <ShoppingBag className="h-5 w-5" />, label: "Buy Plants",  sub: "Browse & purchase" },
-                { value: "SELLER", icon: <Store        className="h-5 w-5" />, label: "Sell Plants", sub: "List & earn" },
-              ] as const
-            ).map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => selectRole(opt.value)}
-                className={cn(
-                  "flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-colors text-center",
-                  role === opt.value
-                    ? "border-primary bg-primary/5 text-primary"
-                    : "border-[var(--border)] text-primary-dark hover:border-primary/40",
-                )}
-                aria-pressed={role === opt.value}
-              >
-                {opt.icon}
-                <span className="font-semibold text-sm">{opt.label}</span>
-                <span className="text-xs text-[var(--color-sage)]">{opt.sub}</span>
-              </button>
-            ))}
-          </div>
+          <p className="text-[var(--color-sage)] mt-1 text-sm">Create your buyer account and start shopping</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-          <input type="hidden" value={role} {...register("role")} />
+          <input type="hidden" value="BUYER" {...register("role")} />
 
           <Input
             label="Full Name"
@@ -163,16 +122,6 @@ export default function RegisterPage() {
             error={errors.phone?.message}
             {...register("phone")}
           />
-
-          {role === "SELLER" && (
-            <Input
-              label="Shop / Nursery Name"
-              placeholder="Green Thumb Nursery"
-              error={errors.shopName?.message}
-              required
-              {...register("shopName")}
-            />
-          )}
 
           <Input
             label="Password"

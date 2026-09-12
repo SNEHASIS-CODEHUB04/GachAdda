@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
@@ -68,25 +67,29 @@ export default async function PaymentVerificationPage() {
                   {payment.proof && (
                     <div className="space-y-2 text-sm">
                       <p className="font-semibold text-primary-dark">Payment Proof</p>
-                      <p className="text-[var(--color-sage)]">Transaction ID: <span className="text-primary-dark font-mono">{payment.proof.transactionId}</span></p>
+                      <p className="text-[var(--color-sage)]">Transaction ID: <span className="text-primary-dark font-mono font-bold">{payment.proof.transactionId}</span></p>
                       <p className="text-[var(--color-sage)]">Amount claimed: {formatCurrency(payment.proof.amount)}</p>
-                      <a
-                        href={payment.proof.screenshotUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-block"
-                        aria-label="View payment screenshot"
-                      >
-                        <div className="relative h-28 w-48 rounded-lg overflow-hidden border border-[var(--border)]">
-                          <Image
+                      {payment.proof.screenshotUrl &&
+                       !payment.proof.screenshotUrl.includes("proof-pending") ? (
+                        <a
+                          href={payment.proof.screenshotUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-block mt-1"
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
                             src={payment.proof.screenshotUrl}
                             alt="Payment screenshot"
-                            fill
-                            sizes="192px"
-                            className="object-cover"
+                            className="h-40 w-auto max-w-xs rounded-lg border border-[var(--border)] object-contain bg-cream"
                           />
+                          <p className="text-xs text-primary mt-1 hover:underline">Click to enlarge ↗</p>
+                        </a>
+                      ) : (
+                        <div className="mt-1 h-20 w-48 rounded-lg border-2 border-dashed border-[var(--border)] flex items-center justify-center bg-cream/50">
+                          <p className="text-xs text-[var(--color-sage)] text-center px-2">No screenshot uploaded<br/>Verify via UTR only</p>
                         </div>
-                      </a>
+                      )}
                     </div>
                   )}
                 </div>
