@@ -1,26 +1,148 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* GachAdda Brand Tokens */
+    --color-primary: #2e7d46;
+    --color-primary-dark: #1f4d2c;
+    --color-sage: #8fa88a;
+    --color-cream: #f6f1e7;
+    --color-earth: #8a5a3b;
+    --color-gold: #c9a94d;
+    --color-success: #2e7d32;
+    --color-warning: #c77700;
+    --color-error: #c62828;
+    --color-info: #1565c0;
+
+    /* Semantic */
+    --background: var(--color-cream);
+    --foreground: var(--color-primary-dark);
+    --card: #ffffff;
+    --card-foreground: var(--color-primary-dark);
+    --border: #d9d0c1;
+    --input: #ffffff;
+    --ring: var(--color-primary);
+    --radius: 0.625rem;
+
+    /* Scrollbar */
+    --scrollbar-thumb: var(--color-sage);
+    --scrollbar-track: var(--color-cream);
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-inter), "Inter", system-ui, sans-serif;
+    line-height: 1.6;
+    min-height: 100dvh;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-poppins), "Poppins", "Sora", system-ui, sans-serif;
+    font-weight: 600;
+    line-height: 1.25;
+    color: var(--color-primary-dark);
+  }
+
+  /* Bengali text */
+  .font-bengali {
+    font-family: "Hind Siliguri", "Noto Sans Bengali", system-ui, sans-serif;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 3px;
+  }
+
+  /* Focus ring */
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  /* Selection */
+  ::selection {
+    background: #2e7d4620;
+    color: var(--color-primary-dark);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer utilities {
+  /* Brand colour utilities */
+  .bg-primary   { background-color: var(--color-primary); }
+  .bg-primary-dark { background-color: var(--color-primary-dark); }
+  .bg-sage      { background-color: var(--color-sage); }
+  .bg-cream     { background-color: var(--color-cream); }
+  .bg-earth     { background-color: var(--color-earth); }
+  .bg-gold      { background-color: var(--color-gold); }
+
+  .text-primary      { color: var(--color-primary); }
+  .text-primary-dark { color: var(--color-primary-dark); }
+  .text-sage         { color: var(--color-sage); }
+  .text-earth        { color: var(--color-earth); }
+  .text-gold         { color: var(--color-gold); }
+
+  .border-primary { border-color: var(--color-primary); }
+  .border-sage    { border-color: var(--color-sage); }
+
+  /* Card shadow */
+  .card-shadow {
+    box-shadow: 0 2px 8px 0 rgba(30, 50, 20, 0.08),
+                0 1px 2px 0 rgba(30, 50, 20, 0.04);
+  }
+  .card-shadow-hover {
+    box-shadow: 0 8px 24px 0 rgba(30, 50, 20, 0.12),
+                0 2px 8px 0 rgba(30, 50, 20, 0.06);
+  }
+
+  /* Gradient overlays */
+  .gradient-primary {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  }
+  .gradient-earth {
+    background: linear-gradient(135deg, var(--color-earth) 0%, #6b3e27 100%);
+  }
+
+  /* Line clamp */
+  .line-clamp-1 { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 1; }
+  .line-clamp-2 { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+  .line-clamp-3 { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+
+  /* Skeleton animation */
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      #e8e2d8 25%,
+      #d5cfc4 50%,
+      #e8e2d8 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 4px;
+  }
+
+  @keyframes shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
 }

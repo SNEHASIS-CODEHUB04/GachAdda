@@ -1,36 +1,133 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# গাছআড্ডা — GachAdda
 
-## Getting Started
+> **গাছ নিয়ে আড্ডা, সবুজে ভরা জীবন** — Chatting about plants, a life full of green.
 
-First, run the development server:
+A full-stack plant community & marketplace platform built with **Next.js 16 (App Router)**, **TypeScript**, **Tailwind CSS**, **Prisma** and **PostgreSQL**.
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/SNEHASIS-CODEHUB04/GachAdda)
+
+---
+
+## ✨ Features
+
+| Area | Features |
+|------|----------|
+| **Auth** | Email/OTP login, Buyer & Seller roles, NextAuth v5 sessions |
+| **Marketplace** | Product browse, search, filter, sort, pagination |
+| **Product Details** | Gallery, care info, seller profile, reviews |
+| **Buyer Requests** | Post custom requests, receive seller offers |
+| **Negotiation** | Discount negotiation thread with Accept/Reject/Counter |
+| **Cart & Checkout** | Seller-grouped cart, address selection, order summary |
+| **QR / UPI Payment** | Manual payment proof submission (screenshot + TxID) |
+| **Payment Verification** | Seller verifies/rejects payment proofs |
+| **Order Lifecycle** | 6-step delivery timeline with real-time status push |
+| **Invoices** | Auto-generated PDF invoice per order |
+| **Real-time Chat** | Buyer ↔ Seller messaging with product/order references |
+| **Notifications** | Grouped, timestamped, read/unread notification centre |
+| **Community Feed** | Instagram-style posts with like, comment, share |
+| **Blog & Gallery** | Bilingual (Bengali/English) plant-care articles & photos |
+| **Reviews** | 1–5 star rating + review body + seller reply |
+| **Wishlist & Compare** | Save & compare up to 4 products |
+| **Analytics** | Seller KPI dashboard with sales charts |
+
+---
+
+## 🛠 Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Framework | Next.js 16 (App Router, TypeScript) |
+| Styling | Tailwind CSS + custom design tokens |
+| Database | PostgreSQL via **Prisma ORM** (Neon / Vercel Postgres) |
+| Auth | **NextAuth.js v5** (Credentials, JWT sessions) |
+| Real-time | **Pusher** (chat & notifications) |
+| Storage | Vercel Blob / Cloudinary |
+| Email | Resend |
+| State | Zustand (cart), TanStack Query (server state) |
+| Validation | Zod + React Hook Form |
+| Hosting | **Vercel** |
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js 18+
+- PostgreSQL database (Neon recommended for Vercel)
+
+### Installation
 
 ```bash
+# 1. Clone the repo
+git clone https://github.com/SNEHASIS-CODEHUB04/GachAdda.git
+cd GachAdda
+
+# 2. Install dependencies
+npm install
+
+# 3. Configure environment
+cp .env.example .env.local
+# Fill in DATABASE_URL, AUTH_SECRET, PUSHER_*, CLOUDINARY_* etc.
+
+# 4. Push the Prisma schema to your DB
+npx prisma db push
+
+# 5. (Optional) Seed categories
+npx prisma db seed
+
+# 6. Run dev server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to see the app.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 📁 Project Structure
 
-## Learn More
+```
+src/
+├── app/
+│   ├── (auth)/          # Login, Register pages
+│   ├── (public)/        # Landing, Marketplace, Products, Community, Blog
+│   ├── (buyer)/         # Buyer dashboard, orders, cart, wishlist, messages
+│   ├── (seller)/        # Seller dashboard, analytics, products, orders
+│   └── api/             # Route handlers (REST API)
+├── components/
+│   ├── ui/              # Design system: Button, Card, Input, Modal, Toast…
+│   ├── layout/          # Navbar, Footer, Sidebar, BottomNav
+│   ├── product/         # ProductCard, ProductGrid
+│   └── chat/            # ConversationList, ChatWindow
+├── lib/
+│   ├── auth.ts          # NextAuth configuration
+│   ├── db.ts            # Prisma singleton
+│   ├── utils.ts         # Helpers (cn, formatCurrency, timeAgo…)
+│   ├── constants.ts     # Brand tokens, categories, order statuses
+│   └── api-helpers.ts   # requireAuth, ok, err, parsePagination
+├── stores/
+│   └── cart-store.ts    # Zustand persisted cart
+└── middleware.ts         # Auth & role-based route protection
+prisma/
+└── schema.prisma         # Full database schema
+```
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🎨 Design System
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Brand tokens defined as CSS custom properties in `globals.css`:
 
-## Deploy on Vercel
+| Token | Value | Usage |
+|-------|-------|-------|
+| `--color-primary` | `#2E7D46` | Buttons, links, active states |
+| `--color-primary-dark` | `#1F4D2C` | Headings, navbar, footer |
+| `--color-sage` | `#8FA88A` | Secondary surfaces, muted text |
+| `--color-cream` | `#F6F1E7` | Page & card backgrounds |
+| `--color-earth` | `#8A5A3B` | Secondary CTAs |
+| `--color-gold` | `#C9A94D` | Ratings, verified badges |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 📄 License
+
+MIT © 2026 Snehasis Dutta

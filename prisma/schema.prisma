@@ -1,0 +1,638 @@
+// GachAdda — Prisma Schema v1.0
+// Database: PostgreSQL (Neon / Vercel Postgres)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─────────────────────────────────────────────
+// AUTH / USER
+// ─────────────────────────────────────────────
+
+enum Role {
+  BUYER
+  SELLER
+}
+
+model User {
+  id             String    @id @default(cuid())
+  name           String
+  email          String    @unique
+  emailVerified  DateTime?
+  phone          String?   @unique
+  passwordHash   String?
+  role           Role      @default(BUYER)
+  avatarUrl      String?
+  bio            String?
+  location       String?
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // Relations
+  accounts       Account[]
+  sessions       Session[]
+  addresses      Address[]
+  products       Product[]       // seller's products
+  orders         Order[]         // buyer's orders
+  buyerRequests  BuyerRequest[]  // requests made by buyer
+  sellerOffers   SellerOffer[]   // offers made by seller
+  sentMessages   Message[]       @relation("SentMessages")
+  conversations  ConversationParticipant[]
+  notifications  Notification[]
+  posts          Post[]
+  comments       Comment[]
+  reviews        Review[]        // reviews written by buyer
+  sellerProfile  SellerProfile?
+  wishlist       Wishlist[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model SellerProfile {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  shopName      String
+  shopBio       String?  @db.Text
+  shopLogoUrl   String?
+  upiId         String?
+  qrCodeUrl     String?
+  bankDetails   Json?
+  totalSales    Int      @default(0)
+  averageRating Float    @default(0)
+  reviewCount   Int      @default(0)
+  isVerified    Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("seller_profiles")
+}
+
+// ─────────────────────────────────────────────
+// ADDRESS
+// ─────────────────────────────────────────────
+
+model Address {
+  id         String   @id @default(cuid())
+  userId     String
+  label      String   @default("Home") // Home / Work / Other
+  fullName   String
+  phone      String
+  line1      String
+  line2      String?
+  city       String
+  state      String
+  pincode    String
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders Order[]
+
+  @@map("addresses")
+}
+
+// ─────────────────────────────────────────────
+// PRODUCT / CATEGORY
+// ─────────────────────────────────────────────
+
+model Category {
+  id       String    @id @default(cuid())
+  name     String    @unique
+  nameBn   String?
+  slug     String    @unique
+  emoji    String?
+  imageUrl String?
+  products Product[]
+
+  @@map("categories")
+}
+
+enum StockStatus {
+  IN_STOCK
+  LOW_STOCK
+  OUT_OF_STOCK
+}
+
+model Product {
+  id           String      @id @default(cuid())
+  sellerId     String
+  categoryId   String
+  name         String
+  slug         String      @unique
+  description  String      @db.Text
+  price        Float
+  discountPct  Int         @default(0)
+  finalPrice   Float
+  stock        Int         @default(0)
+  stockStatus  StockStatus @default(IN_STOCK)
+  images       String[]
+  // care info
+  age          String?
+  height       String?
+  sunlight     String?
+  watering     String?
+  soil         String?
+  careTips     String?     @db.Text
+  isActive     Boolean     @default(true)
+  isFeatured   Boolean     @default(false)
+  averageRating Float      @default(0)
+  reviewCount   Int        @default(0)
+  salesCount    Int        @default(0)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  seller     User       @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  category   Category   @relation(fields: [categoryId], references: [id])
+  orderItems OrderItem[]
+  reviews    Review[]
+  wishlist   Wishlist[]
+
+  @@index([sellerId])
+  @@index([categoryId])
+  @@index([isActive, isFeatured])
+  @@map("products")
+}
+
+// ─────────────────────────────────────────────
+// WISHLIST
+// ─────────────────────────────────────────────
+
+model Wishlist {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@map("wishlists")
+}
+
+// ─────────────────────────────────────────────
+// ORDER
+// ─────────────────────────────────────────────
+
+enum OrderStatus {
+  PAYMENT_PENDING
+  PAYMENT_VERIFICATION
+  PAYMENT_VERIFIED
+  ORDER_ACCEPTED
+  PROCESSING
+  PACKED
+  DISPATCHED
+  DELIVERED
+  COMPLETED
+  CANCELLED
+  REJECTED
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  orderNumber     String      @unique
+  buyerId         String
+  sellerId        String
+  addressId       String?
+  status          OrderStatus @default(PAYMENT_PENDING)
+  subtotal        Float
+  deliveryCharge  Float       @default(0)
+  discount        Float       @default(0)
+  total           Float
+  notes           String?
+  cancelReason    String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  buyer     User        @relation(fields: [buyerId], references: [id])
+  address   Address?    @relation(fields: [addressId], references: [id])
+  items     OrderItem[]
+  payment   Payment?
+  delivery  Delivery?
+  invoice   Invoice?
+  reviews   Review[]
+
+  @@index([buyerId])
+  @@index([sellerId])
+  @@index([status])
+  @@map("orders")
+}
+
+model OrderItem {
+  id         String  @id @default(cuid())
+  orderId    String
+  productId  String
+  productName String // snapshot
+  productImage String?
+  quantity   Int
+  unitPrice  Float
+  total      Float
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("order_items")
+}
+
+// ─────────────────────────────────────────────
+// PAYMENT
+// ─────────────────────────────────────────────
+
+enum PaymentStatus {
+  PENDING
+  SUBMITTED
+  VERIFIED
+  REJECTED
+}
+
+model Payment {
+  id        String        @id @default(cuid())
+  orderId   String        @unique
+  amount    Float
+  upiId     String?
+  status    PaymentStatus @default(PENDING)
+  verifiedAt DateTime?
+  rejectedAt DateTime?
+  rejectReason String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  order Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  proof PaymentProof?
+
+  @@map("payments")
+}
+
+model PaymentProof {
+  id            String   @id @default(cuid())
+  paymentId     String   @unique
+  screenshotUrl String
+  transactionId String
+  amount        Float
+  submittedAt   DateTime @default(now())
+
+  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  @@map("payment_proofs")
+}
+
+// ─────────────────────────────────────────────
+// DELIVERY
+// ─────────────────────────────────────────────
+
+model Delivery {
+  id             String      @id @default(cuid())
+  orderId        String      @unique
+  trackingNumber String?
+  courierName    String?
+  timeline       Json        @default("[]") // [{status, timestamp, note}]
+  estimatedDate  DateTime?
+  deliveredAt    DateTime?
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("deliveries")
+}
+
+// ─────────────────────────────────────────────
+// INVOICE
+// ─────────────────────────────────────────────
+
+model Invoice {
+  id          String   @id @default(cuid())
+  orderId     String   @unique
+  invoiceNumber String @unique
+  pdfUrl      String?
+  issuedAt    DateTime @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("invoices")
+}
+
+// ─────────────────────────────────────────────
+// BUYER REQUEST / SELLER OFFER
+// ─────────────────────────────────────────────
+
+enum RequestStatus {
+  OPEN
+  RESPONDED
+  ACCEPTED
+  CLOSED
+}
+
+model BuyerRequest {
+  id             String        @id @default(cuid())
+  buyerId        String
+  plantName      String
+  categorySlug   String?
+  quantity       Int           @default(1)
+  budgetMin      Float?
+  budgetMax      Float?
+  referenceImage String?
+  location       String?
+  requiredBy     DateTime?
+  description    String        @db.Text
+  wantsDiscount  Boolean       @default(false)
+  status         RequestStatus @default(OPEN)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  buyer  User          @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  offers SellerOffer[]
+
+  @@index([buyerId])
+  @@index([status])
+  @@map("buyer_requests")
+}
+
+enum OfferStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  COUNTERED
+}
+
+model SellerOffer {
+  id             String      @id @default(cuid())
+  requestId      String
+  sellerId       String
+  originalPrice  Float
+  discountAmt    Float       @default(0)
+  finalPrice     Float
+  deliveryCharge Float       @default(0)
+  message        String?     @db.Text
+  status         OfferStatus @default(PENDING)
+  expiresAt      DateTime?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  request BuyerRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  seller  User         @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+
+  @@index([requestId])
+  @@index([sellerId])
+  @@map("seller_offers")
+}
+
+// ─────────────────────────────────────────────
+// DISCOUNT NEGOTIATION
+// ─────────────────────────────────────────────
+
+enum NegotiationStatus {
+  OPEN
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
+model DiscountNegotiation {
+  id          String             @id @default(cuid())
+  productId   String
+  buyerId     String
+  sellerId    String
+  quantity    Int                @default(1)
+  askPrice    Float
+  finalPrice  Float?
+  message     String?
+  status      NegotiationStatus  @default(OPEN)
+  thread      Json               @default("[]") // [{role, price, message, createdAt}]
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@index([productId, buyerId])
+  @@map("discount_negotiations")
+}
+
+// ─────────────────────────────────────────────
+// CHAT
+// ─────────────────────────────────────────────
+
+model Conversation {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  participants ConversationParticipant[]
+  messages     Message[]
+
+  @@map("conversations")
+}
+
+model ConversationParticipant {
+  id             String   @id @default(cuid())
+  conversationId String
+  userId         String
+  lastReadAt     DateTime?
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+  @@map("conversation_participants")
+}
+
+model Message {
+  id             String   @id @default(cuid())
+  conversationId String
+  senderId       String
+  body           String   @db.Text
+  imageUrl       String?
+  refType        String?  // "product" | "order" | "request"
+  refId          String?
+  isRead         Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation("SentMessages", fields: [senderId], references: [id])
+
+  @@index([conversationId, createdAt])
+  @@map("messages")
+}
+
+// ─────────────────────────────────────────────
+// REVIEW
+// ─────────────────────────────────────────────
+
+model Review {
+  id          String   @id @default(cuid())
+  orderId     String
+  productId   String
+  buyerId     String
+  sellerId    String
+  rating      Int      // 1–5
+  body        String   @db.Text
+  careTip     String?
+  sellerReply String?
+  repliedAt   DateTime?
+  createdAt   DateTime @default(now())
+
+  order   Order   @relation(fields: [orderId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+  buyer   User    @relation(fields: [buyerId], references: [id])
+
+  @@unique([orderId, productId])
+  @@index([productId])
+  @@index([sellerId])
+  @@map("reviews")
+}
+
+// ─────────────────────────────────────────────
+// COMMUNITY
+// ─────────────────────────────────────────────
+
+model Post {
+  id          String   @id @default(cuid())
+  authorId    String
+  imageUrl    String?
+  caption     String   @db.Text
+  plantTag    String?
+  categoryTag String?
+  careTip     String?
+  likesCount  Int      @default(0)
+  isRemoved   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments  Comment[]
+  likes     PostLike[]
+
+  @@index([authorId])
+  @@map("posts")
+}
+
+model PostLike {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@map("post_likes")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  postId    String
+  authorId  String
+  body      String   @db.Text
+  createdAt DateTime @default(now())
+
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@map("comments")
+}
+
+// ─────────────────────────────────────────────
+// BLOG & GALLERY
+// ─────────────────────────────────────────────
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model BlogPost {
+  id          String        @id @default(cuid())
+  authorId    String
+  title       String
+  titleBn     String?
+  slug        String        @unique
+  excerpt     String        @db.Text
+  body        String        @db.Text
+  bodyBn      String?       @db.Text
+  coverImage  String?
+  tags        String[]
+  status      ContentStatus @default(DRAFT)
+  publishedAt DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([status, publishedAt])
+  @@map("blog_posts")
+}
+
+model GalleryPhoto {
+  id          String   @id @default(cuid())
+  authorId    String
+  imageUrl    String
+  caption     String?
+  tags        String[]
+  eventTag    String?
+  createdAt   DateTime @default(now())
+
+  @@map("gallery_photos")
+}
+
+// ─────────────────────────────────────────────
+// NOTIFICATION
+// ─────────────────────────────────────────────
+
+model Notification {
+  id         String   @id @default(cuid())
+  userId     String
+  title      String
+  body       String
+  refType    String?  // "order" | "message" | "offer" | "review" | ...
+  refId      String?
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@map("notifications")
+}
