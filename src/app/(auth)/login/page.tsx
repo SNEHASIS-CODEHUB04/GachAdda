@@ -79,11 +79,7 @@ function LoginFormContent() {
             {...register("password")}
           />
 
-          <div className="flex justify-end">
-            <Link href="/forgot-password" className="text-xs text-primary hover:underline">
-              Forgot password?
-            </Link>
-          </div>
+
 
           <Button type="submit" className="w-full" size="lg" loading={isSubmitting}>
             Sign In
