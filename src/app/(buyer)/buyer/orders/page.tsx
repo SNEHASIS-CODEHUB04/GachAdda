@@ -86,8 +86,7 @@ export default async function BuyerOrdersPage({
         <EmptyState
           icon="📦"
           title="No orders yet"
-          description="Once you place an order it will appear here."
-          action={{ label: "Shop Now", onClick: () => {} }}
+          description="Once you place an order it will appear here. Browse the marketplace to get started!"
         />
       ) : (
         <div className="space-y-3">

@@ -31,6 +31,7 @@ export default function CartPage() {
           icon="🛒"
           title="Your cart is empty"
           description="Add plants from the marketplace to get started."
+          action={{ label: "Shop Now", href: "/marketplace" }}
         />
       </div>
     );
