@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,6 +11,7 @@ import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardBody } from "@/components/ui/card";
 import { useToast } from "@/components/ui/toast";
+import { ImagePlus, X } from "lucide-react";
 
 const schema = z.object({
   name:        z.string().min(2).max(150),
@@ -39,6 +40,7 @@ interface Props {
     stock: number;
     categoryId: string;
     isActive: boolean;
+    images: string[];
     age?: string | null;
     height?: string | null;
     sunlight?: string | null;
@@ -53,6 +55,10 @@ export function EditProductForm({ product, categories }: Props) {
   const router = useRouter();
   const { success, error: showError } = useToast();
   const [deleting, setDeleting] = useState(false);
+  const [existingImages, setExistingImages] = useState<string[]>(product.images ?? []);
+  const [newImages, setNewImages] = useState<{ file: File; preview: string }[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const catOptions = categories.map((c) => ({ value: c.id, label: `${c.emoji ?? ""} ${c.name}` }));
 
@@ -79,11 +85,29 @@ export function EditProductForm({ product, categories }: Props) {
   const discountPct = watch("discountPct") ?? 0;
   const finalPrice = Number(price) * (1 - Number(discountPct) / 100);
 
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    const valid = files.filter((f) => f.type.startsWith("image/") && f.size < 5 * 1024 * 1024);
+    const imgs = valid.map((file) => ({ file, preview: URL.createObjectURL(file) }));
+    setNewImages((prev) => [...prev, ...imgs].slice(0, 5 - existingImages.length));
+    e.target.value = "";
+  }
+
   async function onSubmit(data: FormData) {
+    setUploading(true);
+    let uploadedUrls: string[] = [];
+    for (const img of newImages) {
+      const fd = new FormData();
+      fd.append("file", img.file);
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      if (res.ok) { const d = await res.json(); uploadedUrls.push(d.url); }
+    }
+    setUploading(false);
+    const allImages = [...existingImages, ...uploadedUrls];
     const res = await fetch(`/api/products/${product.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
+      body: JSON.stringify({ ...data, images: allImages }),
     });
     const json = await res.json();
     if (!res.ok) { showError(json.error ?? "Failed to update"); return; }
@@ -102,6 +126,46 @@ export function EditProductForm({ product, categories }: Props) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+
+      {/* Images */}
+      <Card>
+        <CardHeader><CardTitle>Product Photos</CardTitle></CardHeader>
+        <CardBody className="space-y-3">
+          <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+            {existingImages.map((url, i) => (
+              <div key={url} className="relative group aspect-square rounded-xl overflow-hidden border border-[var(--border)] bg-cream">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={url} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
+                <button type="button" onClick={() => setExistingImages((p) => p.filter((_, j) => j !== i))}
+                  className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition">
+                  <X className="h-3 w-3" />
+                </button>
+                {i === 0 && <span className="absolute bottom-1 left-1 text-[10px] bg-primary text-white px-1.5 py-0.5 rounded font-medium">Main</span>}
+              </div>
+            ))}
+            {newImages.map((img, i) => (
+              <div key={i} className="relative group aspect-square rounded-xl overflow-hidden border border-primary/30 bg-cream">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={img.preview} alt="New" className="w-full h-full object-cover" />
+                <button type="button" onClick={() => setNewImages((p) => p.filter((_, j) => j !== i))}
+                  className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition">
+                  <X className="h-3 w-3" />
+                </button>
+                <span className="absolute bottom-1 left-1 text-[10px] bg-success text-white px-1.5 py-0.5 rounded font-medium">New</span>
+              </div>
+            ))}
+            {existingImages.length + newImages.length < 5 && (
+              <button type="button" onClick={() => fileRef.current?.click()}
+                className="aspect-square rounded-xl border-2 border-dashed border-[var(--border)] hover:border-primary/50 flex flex-col items-center justify-center gap-1 bg-cream/40 hover:bg-cream transition text-[var(--color-sage)] hover:text-primary">
+                <ImagePlus className="h-5 w-5" />
+                <span className="text-[10px] font-medium">Add</span>
+              </button>
+            )}
+          </div>
+          <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
+          <p className="text-xs text-[var(--color-sage)]">Click × to remove a photo. First photo is the main image.</p>
+        </CardBody>
+      </Card>
       <Card>
         <CardHeader><CardTitle>Basic Information</CardTitle></CardHeader>
         <CardBody className="space-y-4">
@@ -145,7 +209,9 @@ export function EditProductForm({ product, categories }: Props) {
       </Card>
 
       <div className="flex gap-3">
-        <Button type="submit" size="lg" loading={isSubmitting}>Save Changes</Button>
+        <Button type="submit" size="lg" loading={isSubmitting || uploading}>
+          {uploading ? "Uploading…" : "Save Changes"}
+        </Button>
         <Button type="button" variant="outline" size="lg" onClick={() => router.back()}>Cancel</Button>
         <Button type="button" variant="ghost" size="lg" className="ml-auto text-error hover:bg-error/10" loading={deleting} onClick={handleDelete}>
           Delete Product

@@ -13,7 +13,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
       where: { id },
       select: {
         id: true, name: true, description: true, price: true, discountPct: true,
-        stock: true, categoryId: true, isActive: true,
+        stock: true, categoryId: true, isActive: true, images: true,
         age: true, height: true, sunlight: true, watering: true, soil: true, careTips: true,
       },
     }),
