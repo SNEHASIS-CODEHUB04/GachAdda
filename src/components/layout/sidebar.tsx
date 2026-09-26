@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Package, ShoppingBag, CreditCard,
   MessageCircle, Bell, FileText, BarChart2,
   Users, Star, Settings, User, Heart,
-  Send, Tag, Truck, BookOpen, Image,
+  Send, Tag, Truck,
   CheckCircle, Search, MessageSquare,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -49,7 +49,6 @@ const sellerNav: NavItem[] = [
   { href: "/seller/sales-history",      label: "Sales History",    icon: <Truck           className="h-4.5 w-4.5" /> },
   { href: "/seller/invoices",           label: "Invoices",         icon: <FileText        className="h-4.5 w-4.5" /> },
   { href: "/seller/community",          label: "Community",        icon: <Users           className="h-4.5 w-4.5" /> },
-  { href: "/seller/blog",               label: "Blog & Gallery",   icon: <BookOpen        className="h-4.5 w-4.5" /> },
   { href: "/seller/reviews",            label: "Reviews",          icon: <Star            className="h-4.5 w-4.5" /> },
   { href: "/seller/profile",            label: "Profile",          icon: <User            className="h-4.5 w-4.5" /> },
   { href: "/seller/settings",           label: "Settings",         icon: <Settings        className="h-4.5 w-4.5" /> },
