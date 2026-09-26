@@ -78,23 +78,22 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           <div className="space-y-3">
             <div className="relative aspect-square rounded-2xl overflow-hidden bg-cream">
               {product.images[0] ? (
-                <Image
+                <img
                   src={product.images[0]}
                   alt={product.name}
-                  fill
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                  className="object-cover"
-                  priority
+                  className="w-full h-full object-cover"
                 />
               ) : (
                 <div className="flex h-full items-center justify-center text-8xl" aria-hidden="true">🌿</div>
               )}
             </div>
             {product.images.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto" role="list" aria-label="Product images">
+              <div className="grid grid-cols-4 gap-2" role="list" aria-label="Product images">
                 {product.images.map((img, i) => (
-                  <div key={i} role="listitem" className="relative h-16 w-16 flex-shrink-0 rounded-lg overflow-hidden bg-cream">
-                    <Image src={img} alt={`${product.name} image ${i + 1}`} fill sizes="64px" className="object-cover" loading="lazy" />
+                  <div key={i} role="listitem" className="relative aspect-square rounded-xl overflow-hidden bg-cream border-2 border-[var(--border)] hover:border-primary cursor-pointer transition-colors">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={img} alt={`${product.name} image ${i + 1}`} className="w-full h-full object-cover" loading="lazy" />
+                    {i === 0 && <span className="absolute bottom-1 left-1 text-[9px] bg-primary text-white px-1 py-0.5 rounded font-bold">MAIN</span>}
                   </div>
                 ))}
               </div>

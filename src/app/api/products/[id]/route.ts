@@ -11,6 +11,7 @@ const patchSchema = z.object({
   discountPct: z.coerce.number().min(0).max(90).optional(),
   stock:       z.coerce.number().int().min(0).optional(),
   isActive:    z.boolean().optional(),
+  images:      z.array(z.string()).max(4).optional(),
   age:         z.string().nullish(),
   height:      z.string().nullish(),
   sunlight:    z.string().nullish(),

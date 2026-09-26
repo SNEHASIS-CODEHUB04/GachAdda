@@ -11,7 +11,7 @@ const createSchema = z.object({
   price:       z.number().positive(),
   discountPct: z.number().min(0).max(90).default(0),
   stock:       z.number().int().min(0),
-  images:      z.array(z.string().url()).max(6).default([]),
+  images:      z.array(z.string()).max(4).default([]),
   age:         z.string().optional(),
   height:      z.string().optional(),
   sunlight:    z.string().optional(),

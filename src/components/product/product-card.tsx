@@ -115,12 +115,11 @@ export function ProductCard({
       {/* Image */}
       <Link href={`/products/${product.slug}`} className="block relative h-52 bg-cream overflow-hidden">
         {product.images[0] ? (
-          <Image
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
             src={product.images[0]}
             alt={product.name}
-            fill
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             loading="lazy"
           />
         ) : (

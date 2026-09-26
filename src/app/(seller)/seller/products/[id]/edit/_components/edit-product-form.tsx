@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,7 +11,7 @@ import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardBody } from "@/components/ui/card";
 import { useToast } from "@/components/ui/toast";
-import { ImagePlus, X } from "lucide-react";
+import { ImageUploader } from "@/components/product/image-uploader";
 
 const schema = z.object({
   name:        z.string().min(2).max(150),
@@ -32,21 +32,11 @@ type FormData = z.infer<typeof schema>;
 
 interface Props {
   product: {
-    id: string;
-    name: string;
-    description: string;
-    price: number;
-    discountPct: number;
-    stock: number;
-    categoryId: string;
-    isActive: boolean;
+    id: string; name: string; description: string; price: number;
+    discountPct: number; stock: number; categoryId: string; isActive: boolean;
     images: string[];
-    age?: string | null;
-    height?: string | null;
-    sunlight?: string | null;
-    watering?: string | null;
-    soil?: string | null;
-    careTips?: string | null;
+    age?: string | null; height?: string | null; sunlight?: string | null;
+    watering?: string | null; soil?: string | null; careTips?: string | null;
   };
   categories: { id: string; name: string; emoji: string | null }[];
 }
@@ -55,29 +45,20 @@ export function EditProductForm({ product, categories }: Props) {
   const router = useRouter();
   const { success, error: showError } = useToast();
   const [deleting, setDeleting] = useState(false);
-  const [existingImages, setExistingImages] = useState<string[]>(product.images ?? []);
-  const [newImages, setNewImages] = useState<{ file: File; preview: string }[]>([]);
   const [uploading, setUploading] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const [existingUrls, setExistingUrls] = useState<string[]>(product.images ?? []);
+  const [newFiles, setNewFiles] = useState<{ file: File; preview: string }[]>([]);
 
   const catOptions = categories.map((c) => ({ value: c.id, label: `${c.emoji ?? ""} ${c.name}` }));
 
   const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema) as any,
     defaultValues: {
-      name: product.name,
-      categoryId: product.categoryId,
-      description: product.description,
-      price: product.price,
-      discountPct: product.discountPct,
-      stock: product.stock,
+      name: product.name, categoryId: product.categoryId, description: product.description,
+      price: product.price, discountPct: product.discountPct, stock: product.stock,
       isActive: product.isActive,
-      age: product.age ?? "",
-      height: product.height ?? "",
-      sunlight: product.sunlight ?? "",
-      watering: product.watering ?? "",
-      soil: product.soil ?? "",
-      careTips: product.careTips ?? "",
+      age: product.age ?? "", height: product.height ?? "", sunlight: product.sunlight ?? "",
+      watering: product.watering ?? "", soil: product.soil ?? "", careTips: product.careTips ?? "",
     },
   });
 
@@ -85,25 +66,24 @@ export function EditProductForm({ product, categories }: Props) {
   const discountPct = watch("discountPct") ?? 0;
   const finalPrice = Number(price) * (1 - Number(discountPct) / 100);
 
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? []);
-    const valid = files.filter((f) => f.type.startsWith("image/") && f.size < 5 * 1024 * 1024);
-    const imgs = valid.map((file) => ({ file, preview: URL.createObjectURL(file) }));
-    setNewImages((prev) => [...prev, ...imgs].slice(0, 5 - existingImages.length));
-    e.target.value = "";
+  async function uploadNewFiles(): Promise<string[]> {
+    const urls: string[] = [];
+    for (const img of newFiles) {
+      const fd = new FormData();
+      fd.append("file", img.file);
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      if (res.ok) { const d = await res.json(); urls.push(d.url); }
+      else { showError("Failed to upload one image"); }
+    }
+    return urls;
   }
 
   async function onSubmit(data: FormData) {
     setUploading(true);
-    let uploadedUrls: string[] = [];
-    for (const img of newImages) {
-      const fd = new FormData();
-      fd.append("file", img.file);
-      const res = await fetch("/api/upload", { method: "POST", body: fd });
-      if (res.ok) { const d = await res.json(); uploadedUrls.push(d.url); }
-    }
+    const uploadedUrls = await uploadNewFiles();
     setUploading(false);
-    const allImages = [...existingImages, ...uploadedUrls];
+    const allImages = [...existingUrls, ...uploadedUrls].slice(0, 4);
+
     const res = await fetch(`/api/products/${product.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -127,45 +107,23 @@ export function EditProductForm({ product, categories }: Props) {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
 
-      {/* Images */}
+      {/* Photos */}
       <Card>
-        <CardHeader><CardTitle>Product Photos</CardTitle></CardHeader>
-        <CardBody className="space-y-3">
-          <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-            {existingImages.map((url, i) => (
-              <div key={url} className="relative group aspect-square rounded-xl overflow-hidden border border-[var(--border)] bg-cream">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={url} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
-                <button type="button" onClick={() => setExistingImages((p) => p.filter((_, j) => j !== i))}
-                  className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition">
-                  <X className="h-3 w-3" />
-                </button>
-                {i === 0 && <span className="absolute bottom-1 left-1 text-[10px] bg-primary text-white px-1.5 py-0.5 rounded font-medium">Main</span>}
-              </div>
-            ))}
-            {newImages.map((img, i) => (
-              <div key={i} className="relative group aspect-square rounded-xl overflow-hidden border border-primary/30 bg-cream">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={img.preview} alt="New" className="w-full h-full object-cover" />
-                <button type="button" onClick={() => setNewImages((p) => p.filter((_, j) => j !== i))}
-                  className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition">
-                  <X className="h-3 w-3" />
-                </button>
-                <span className="absolute bottom-1 left-1 text-[10px] bg-success text-white px-1.5 py-0.5 rounded font-medium">New</span>
-              </div>
-            ))}
-            {existingImages.length + newImages.length < 5 && (
-              <button type="button" onClick={() => fileRef.current?.click()}
-                className="aspect-square rounded-xl border-2 border-dashed border-[var(--border)] hover:border-primary/50 flex flex-col items-center justify-center gap-1 bg-cream/40 hover:bg-cream transition text-[var(--color-sage)] hover:text-primary">
-                <ImagePlus className="h-5 w-5" />
-                <span className="text-[10px] font-medium">Add</span>
-              </button>
-            )}
-          </div>
-          <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
-          <p className="text-xs text-[var(--color-sage)]">Click × to remove a photo. First photo is the main image.</p>
+        <CardHeader>
+          <CardTitle>Product Photos <span className="text-sm font-normal text-[var(--color-sage)]">(up to 4)</span></CardTitle>
+        </CardHeader>
+        <CardBody>
+          <ImageUploader
+            existingUrls={existingUrls}
+            newFiles={newFiles}
+            onAddFiles={(files) => setNewFiles((p) => [...p, ...files].slice(0, 4 - existingUrls.length))}
+            onRemoveExisting={(i) => setExistingUrls((p) => p.filter((_, j) => j !== i))}
+            onRemoveNew={(i) => setNewFiles((p) => { URL.revokeObjectURL(p[i].preview); return p.filter((_, j) => j !== i); })}
+          />
         </CardBody>
       </Card>
+
+      {/* Basic Info */}
       <Card>
         <CardHeader><CardTitle>Basic Information</CardTitle></CardHeader>
         <CardBody className="space-y-4">
@@ -175,6 +133,7 @@ export function EditProductForm({ product, categories }: Props) {
         </CardBody>
       </Card>
 
+      {/* Pricing */}
       <Card>
         <CardHeader><CardTitle>Pricing & Stock</CardTitle></CardHeader>
         <CardBody className="space-y-4">
@@ -183,7 +142,7 @@ export function EditProductForm({ product, categories }: Props) {
             <Input label="Discount %" type="number" min={0} max={90} {...register("discountPct")} />
             <div>
               <p className="text-sm font-medium text-primary-dark mb-1.5">Final Price</p>
-              <p className="text-lg font-bold text-primary">₹{isFinite(finalPrice) ? Math.round(finalPrice) : "—"}</p>
+              <p className="text-2xl font-bold text-primary">₹{isFinite(finalPrice) ? Math.round(finalPrice) : "—"}</p>
             </div>
           </div>
           <Input label="Stock Quantity" type="number" min={0} error={errors.stock?.message} required {...register("stock")} />
@@ -194,8 +153,9 @@ export function EditProductForm({ product, categories }: Props) {
         </CardBody>
       </Card>
 
+      {/* Care Info */}
       <Card>
-        <CardHeader><CardTitle>Care Information</CardTitle></CardHeader>
+        <CardHeader><CardTitle>Care Information <span className="text-sm font-normal text-[var(--color-sage)]">(optional)</span></CardTitle></CardHeader>
         <CardBody className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <Input label="Age / Maturity" placeholder="2 years" {...register("age")} />
@@ -208,7 +168,7 @@ export function EditProductForm({ product, categories }: Props) {
         </CardBody>
       </Card>
 
-      <div className="flex gap-3">
+      <div className="flex gap-3 pb-10">
         <Button type="submit" size="lg" loading={isSubmitting || uploading}>
           {uploading ? "Uploading…" : "Save Changes"}
         </Button>
