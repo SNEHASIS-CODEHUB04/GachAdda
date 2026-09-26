@@ -64,26 +64,28 @@ export default async function AnalyticsPage() {
             {topProducts.length === 0 ? (
               <p className="text-center py-6 text-[var(--color-sage)]">No sales data yet</p>
             ) : (
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-[var(--color-sage)] border-b border-[var(--border)]">
-                    <th className="pb-2 font-medium">Product</th>
-                    <th className="pb-2 font-medium text-right">Sales</th>
-                    <th className="pb-2 font-medium text-right">Price</th>
-                    <th className="pb-2 font-medium text-right">Rating</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[var(--border)]">
-                  {topProducts.map((p) => (
-                    <tr key={p.id}>
-                      <td className="py-2.5 font-medium text-primary-dark">{p.name}</td>
-                      <td className="py-2.5 text-right text-[var(--color-sage)]">{p.salesCount}</td>
-                      <td className="py-2.5 text-right text-primary font-medium">{formatCurrency(p.finalPrice)}</td>
-                      <td className="py-2.5 text-right text-gold">{"★".repeat(Math.round(p.averageRating))}</td>
+              <div className="overflow-x-auto -mx-4 sm:mx-0">
+                <table className="w-full text-sm min-w-[320px]">
+                  <thead>
+                    <tr className="text-left text-[var(--color-sage)] border-b border-[var(--border)]">
+                      <th className="pb-2 font-medium px-4 sm:px-0">Product</th>
+                      <th className="pb-2 font-medium text-right">Sales</th>
+                      <th className="pb-2 font-medium text-right">Price</th>
+                      <th className="pb-2 font-medium text-right px-4 sm:px-0">Rating</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-[var(--border)]">
+                    {topProducts.map((p) => (
+                      <tr key={p.id}>
+                        <td className="py-2.5 font-medium text-primary-dark px-4 sm:px-0 max-w-[120px] truncate">{p.name}</td>
+                        <td className="py-2.5 text-right text-[var(--color-sage)]">{p.salesCount}</td>
+                        <td className="py-2.5 text-right text-primary font-medium">{formatCurrency(p.finalPrice)}</td>
+                        <td className="py-2.5 text-right text-gold px-4 sm:px-0">{"★".repeat(Math.round(p.averageRating))}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </CardBody>
         </Card>
@@ -94,28 +96,30 @@ export default async function AnalyticsPage() {
             {monthlyOrders.length === 0 ? (
               <p className="text-center py-6 text-[var(--color-sage)]">No transactions yet</p>
             ) : (
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-[var(--color-sage)] border-b border-[var(--border)]">
-                    <th className="pb-2 font-medium">Date</th>
-                    <th className="pb-2 font-medium text-right">Amount</th>
-                    <th className="pb-2 font-medium text-right">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[var(--border)]">
-                  {monthlyOrders.map((o) => (
-                    <tr key={o.id}>
-                      <td className="py-2.5 text-[var(--color-sage)]">{new Date(o.createdAt).toLocaleDateString("en-IN")}</td>
-                      <td className="py-2.5 text-right font-medium text-primary">{formatCurrency(o.total)}</td>
-                      <td className="py-2.5 text-right">
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${o.status === "DELIVERED" || o.status === "COMPLETED" ? "bg-success/10 text-success" : "bg-warning/10 text-warning"}`}>
-                          {o.status.replace(/_/g, " ")}
-                        </span>
-                      </td>
+              <div className="overflow-x-auto -mx-4 sm:mx-0">
+                <table className="w-full text-sm min-w-[280px]">
+                  <thead>
+                    <tr className="text-left text-[var(--color-sage)] border-b border-[var(--border)]">
+                      <th className="pb-2 font-medium px-4 sm:px-0">Date</th>
+                      <th className="pb-2 font-medium text-right">Amount</th>
+                      <th className="pb-2 font-medium text-right px-4 sm:px-0">Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-[var(--border)]">
+                    {monthlyOrders.map((o) => (
+                      <tr key={o.id}>
+                        <td className="py-2.5 text-[var(--color-sage)] px-4 sm:px-0">{new Date(o.createdAt).toLocaleDateString("en-IN")}</td>
+                        <td className="py-2.5 text-right font-medium text-primary">{formatCurrency(o.total)}</td>
+                        <td className="py-2.5 text-right px-4 sm:px-0">
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${o.status === "DELIVERED" || o.status === "COMPLETED" ? "bg-success/10 text-success" : "bg-warning/10 text-warning"}`}>
+                            {o.status.replace(/_/g, " ")}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </CardBody>
         </Card>

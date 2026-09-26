@@ -5,6 +5,7 @@ import { CATEGORIES, PAGINATION } from "@/lib/constants";
 import MarketplaceFilters from "./_components/marketplace-filters";
 import { ProductGrid } from "./_components/product-grid";
 import { MarketplacePagination } from "./_components/marketplace-pagination";
+import { MobileFilterDrawer } from "./_components/mobile-filter-drawer";
 
 export const metadata: Metadata = { title: "Marketplace — Browse Plants & Seeds" };
 
@@ -64,7 +65,7 @@ export default async function MarketplacePage({
     <div className="py-6">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-6">
+        <div className="mb-4">
           <h1 className="text-2xl font-bold text-primary-dark">
             {activeCat ? `${activeCat.emoji} ${activeCat.label}` : "🌿 Marketplace"}
           </h1>
@@ -74,8 +75,15 @@ export default async function MarketplacePage({
           </p>
         </div>
 
+        {/* Mobile filter button */}
+        <div className="mb-4">
+          <Suspense fallback={null}>
+            <MobileFilterDrawer currentParams={params} />
+          </Suspense>
+        </div>
+
         <div className="flex gap-6">
-          {/* Sidebar Filters */}
+          {/* Sidebar Filters — desktop only */}
           <aside className="hidden lg:block w-56 shrink-0">
             <Suspense fallback={null}>
               <MarketplaceFilters currentParams={params} />

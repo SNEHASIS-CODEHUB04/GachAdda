@@ -90,7 +90,7 @@ export default async function SalesHistoryPage() {
         <Card>
           <CardHeader><CardTitle>Completed Orders</CardTitle></CardHeader>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm min-w-[520px]">
               <thead className="bg-cream/50">
                 <tr className="text-left text-[var(--color-sage)]">
                   <th className="px-4 py-3 font-medium">Order #</th>

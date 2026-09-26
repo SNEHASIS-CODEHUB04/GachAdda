@@ -11,9 +11,10 @@ interface Props {
     q?: string; category?: string; sort?: string;
     minPrice?: string; maxPrice?: string;
   };
+  onClose?: () => void;
 }
 
-export default function MarketplaceFilters({ currentParams }: Props) {
+export default function MarketplaceFilters({ currentParams, onClose }: Props) {
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [minPrice, setMinPrice] = useState(currentParams.minPrice ?? "");
@@ -28,7 +29,10 @@ export default function MarketplaceFilters({ currentParams }: Props) {
       ...(currentParams.maxPrice ? { maxPrice: currentParams.maxPrice }  : {}),
       ...overrides,
     });
-    startTransition(() => router.push(`/marketplace?${params.toString()}`));
+    startTransition(() => {
+      router.push(`/marketplace?${params.toString()}`);
+      onClose?.();
+    });
   }
 
   return (

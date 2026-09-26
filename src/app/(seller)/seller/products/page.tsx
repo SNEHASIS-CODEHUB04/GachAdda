@@ -54,19 +54,19 @@ export default async function SellerProductsPage({
       </div>
 
       {/* Search & filter */}
-      <form method="GET" className="flex gap-3">
+      <form method="GET" className="flex flex-wrap gap-2 sm:gap-3">
         <input
           name="q"
           defaultValue={q}
           placeholder="Search products…"
-          className="flex-1 rounded-md border border-[var(--border)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          className="flex-1 min-w-0 rounded-md border border-[var(--border)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           aria-label="Search products"
         />
-        <select name="status" defaultValue={status ?? ""} className="rounded-md border border-[var(--border)] px-3 py-2 text-sm" aria-label="Filter by status">
+        <select name="status" defaultValue={status ?? ""} className="rounded-md border border-[var(--border)] px-3 py-2 text-sm bg-white" aria-label="Filter by status">
           <option value="">Active</option>
           <option value="inactive">Inactive / Hidden</option>
         </select>
-        <Button type="submit" variant="outline" size="md">Search</Button>
+        <Button type="submit" variant="outline" size="md" className="shrink-0">Search</Button>
       </form>
 
       {products.length === 0 ? (

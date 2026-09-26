@@ -75,36 +75,61 @@ export default async function SellerOrdersPage({
       {orders.length === 0 ? (
         <EmptyState icon={<Package className="h-12 w-12 text-[var(--color-sage)]" />} title="No orders found" description="Orders will appear here once buyers complete checkout." />
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm" aria-label="Orders table">
-            <thead>
-              <tr className="border-b border-[var(--border)] text-left text-xs font-semibold text-[var(--color-sage)] uppercase tracking-wider">
-                <th className="pb-3 pr-4">Order ID</th>
-                <th className="pb-3 pr-4">Buyer</th>
-                <th className="pb-3 pr-4">Product</th>
-                <th className="pb-3 pr-4">Amount</th>
-                <th className="pb-3 pr-4">Date</th>
-                <th className="pb-3">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[var(--border)]">
-              {orders.map((o) => (
-                <tr key={o.id} className="hover:bg-cream/30 transition-colors">
-                  <td className="py-3 pr-4">
-                    <Link href={`/seller/orders/${o.id}`} className="font-semibold text-primary hover:underline">{o.orderNumber}</Link>
-                  </td>                  <td className="py-3 pr-4">
-                    <p>{o.buyer.name}</p>
+        <>
+          {/* Mobile: card list */}
+          <div className="space-y-3 lg:hidden">
+            {orders.map((o) => (
+              <Link key={o.id} href={`/seller/orders/${o.id}`} className="block bg-white rounded-xl border border-[var(--border)] shadow-card p-4 hover:shadow-card-md transition-shadow">
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <div>
+                    <p className="font-semibold text-primary text-sm">{o.orderNumber}</p>
+                    <p className="text-sm text-primary-dark">{o.buyer.name}</p>
                     <p className="text-xs text-[var(--color-sage)]">{o.buyer.email}</p>
-                  </td>
-                  <td className="py-3 pr-4 max-w-[150px] truncate">{o.items[0]?.productName ?? "—"}</td>
-                  <td className="py-3 pr-4 font-bold text-primary">{formatCurrency(o.total)}</td>
-                  <td className="py-3 pr-4 text-[var(--color-sage)]">{formatDate(o.createdAt)}</td>
-                  <td className="py-3"><OrderStatusBadge status={o.status} /></td>
+                  </div>
+                  <OrderStatusBadge status={o.status} />
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-[var(--color-sage)] truncate max-w-[160px]">{o.items[0]?.productName ?? "—"}</span>
+                  <span className="font-bold text-primary shrink-0">{formatCurrency(o.total)}</span>
+                </div>
+                <p className="text-xs text-[var(--color-sage)] mt-1">{formatDate(o.createdAt)}</p>
+              </Link>
+            ))}
+          </div>
+
+          {/* Desktop: table */}
+          <div className="hidden lg:block overflow-x-auto">
+            <table className="w-full text-sm" aria-label="Orders table">
+              <thead>
+                <tr className="border-b border-[var(--border)] text-left text-xs font-semibold text-[var(--color-sage)] uppercase tracking-wider">
+                  <th className="pb-3 pr-4">Order ID</th>
+                  <th className="pb-3 pr-4">Buyer</th>
+                  <th className="pb-3 pr-4">Product</th>
+                  <th className="pb-3 pr-4">Amount</th>
+                  <th className="pb-3 pr-4">Date</th>
+                  <th className="pb-3">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-[var(--border)]">
+                {orders.map((o) => (
+                  <tr key={o.id} className="hover:bg-cream/30 transition-colors">
+                    <td className="py-3 pr-4">
+                      <Link href={`/seller/orders/${o.id}`} className="font-semibold text-primary hover:underline">{o.orderNumber}</Link>
+                    </td>
+                    <td className="py-3 pr-4">
+                      <p>{o.buyer.name}</p>
+                      <p className="text-xs text-[var(--color-sage)]">{o.buyer.email}</p>
+                    </td>
+                    <td className="py-3 pr-4 max-w-[150px] truncate">{o.items[0]?.productName ?? "—"}</td>
+                    <td className="py-3 pr-4 font-bold text-primary">{formatCurrency(o.total)}</td>
+                    <td className="py-3 pr-4 text-[var(--color-sage)]">{formatDate(o.createdAt)}</td>
+                    <td className="py-3"><OrderStatusBadge status={o.status} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );
