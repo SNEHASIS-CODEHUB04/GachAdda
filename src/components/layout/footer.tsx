@@ -123,6 +123,7 @@ export function Footer() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-white/40">
           <p>© {year} {BRAND.name}. All rights reserved.</p>
           <p className="font-bengali">{BRAND.tagline}</p>
+          <p>Made by <a href="https://github.com/SNEHASIS-CODEHUB04" target="_blank" rel="noopener noreferrer" className="text-white/60 hover:text-white transition-colors font-medium">Snehasis Dutta</a> · SNEHASIS-CODEHUB04</p>
         </div>
       </div>
     </footer>
