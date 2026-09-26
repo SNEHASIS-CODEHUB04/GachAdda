@@ -68,9 +68,18 @@ export async function DELETE(_req: NextRequest, ctx: RouteContext<"/api/products
   if (error) return error;
   const { id } = await ctx.params;
 
-  const existing = await db.product.findUnique({ where: { id }, select: { sellerId: true } });
+  const existing = await db.product.findUnique({ where: { id }, select: { sellerId: true, orderItems: { take: 1, select: { id: true } } } });
   if (!existing || existing.sellerId !== user!.id) return err("Forbidden", 403);
 
-  await db.product.update({ where: { id }, data: { isActive: false } });
+  if (existing.orderItems.length === 0) {
+    // No orders — hard delete safe
+    await db.product.delete({ where: { id } });
+  } else {
+    // Has orders — soft delete: isActive=false, stock=0, name prefixed
+    await db.product.update({
+      where: { id },
+      data: { isActive: false, stock: 0, stockStatus: "OUT_OF_STOCK" },
+    });
+  }
   return ok({ deleted: true });
 }

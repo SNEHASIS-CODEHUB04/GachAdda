@@ -29,8 +29,7 @@ export default async function SellerProductsPage({
 
   const where = {
     sellerId: session.user.id,
-    ...(status === "active"   ? { isActive: true }  : {}),
-    ...(status === "inactive" ? { isActive: false } : {}),
+    ...(status === "inactive" ? { isActive: false } : { isActive: true }),
     ...(q ? { name: { contains: q, mode: "insensitive" as const } } : {}),
   };
 
@@ -64,9 +63,8 @@ export default async function SellerProductsPage({
           aria-label="Search products"
         />
         <select name="status" defaultValue={status ?? ""} className="rounded-md border border-[var(--border)] px-3 py-2 text-sm" aria-label="Filter by status">
-          <option value="">All</option>
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
+          <option value="">Active</option>
+          <option value="inactive">Inactive / Hidden</option>
         </select>
         <Button type="submit" variant="outline" size="md">Search</Button>
       </form>
